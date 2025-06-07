@@ -59,7 +59,7 @@ export interface RestaurantTable {
   restaurant_id: string;
   table_number: number;
   qr_token: string;
-  token: string;
+  token: string; // For compatibility with existing code
   seats: number;
   location?: string;
   is_active: boolean;

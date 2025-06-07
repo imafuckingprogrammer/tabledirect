@@ -14,7 +14,7 @@ interface MenuItemFormData {
   image_url: string;
   is_available: boolean;
   allergens: string[];
-  preparation_time: number;
+  preparation_time_minutes: number;
 }
 
 export function MenuManagement() {
@@ -38,7 +38,7 @@ export function MenuManagement() {
     image_url: '',
     is_available: true,
     allergens: [],
-    preparation_time: 10,
+    preparation_time_minutes: 10,
   });
 
   const [categoryForm, setCategoryForm] = useState({
@@ -191,7 +191,7 @@ export function MenuManagement() {
       image_url: '',
       is_available: true,
       allergens: [],
-      preparation_time: 10,
+      preparation_time_minutes: 10,
     });
     setEditingItem(null);
     setShowItemForm(false);
@@ -216,7 +216,7 @@ export function MenuManagement() {
       image_url: item.image_url || '',
       is_available: item.is_available,
       allergens: item.allergens || [],
-      preparation_time: item.preparation_time || 10,
+      preparation_time_minutes: item.preparation_time_minutes || 10,
     });
     setEditingItem(item);
     setShowItemForm(true);
@@ -395,8 +395,8 @@ export function MenuManagement() {
                           <Package className="w-4 h-4" />
                           {item.category?.name}
                         </div>
-                        {item.preparation_time && (
-                          <span>{item.preparation_time} min prep</span>
+                        {item.preparation_time_minutes && (
+                          <span>{item.preparation_time_minutes} min prep</span>
                         )}
                       </div>
                       {item.allergens && item.allergens.length > 0 && (
@@ -523,8 +523,8 @@ export function MenuManagement() {
                     <input
                       type="number"
                       min="1"
-                      value={itemForm.preparation_time}
-                      onChange={(e) => setItemForm(prev => ({ ...prev, preparation_time: parseInt(e.target.value) || 10 }))}
+                      value={itemForm.preparation_time_minutes}
+                      onChange={(e) => setItemForm(prev => ({ ...prev, preparation_time_minutes: parseInt(e.target.value) || 10 }))}
                       className="input"
                     />
                   </div>

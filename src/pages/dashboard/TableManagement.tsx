@@ -53,12 +53,13 @@ export function TableManagement() {
 
     try {
       // Generate token for new table
-      const token = crypto.randomUUID();
+      const token = self.crypto?.randomUUID() || `table_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       const tableData = {
         ...tableForm,
         restaurant_id: restaurantId,
-        token: editingTable ? editingTable.token : token,
+        qr_token: editingTable ? (editingTable.qr_token || editingTable.token) : token,
+        token: editingTable ? (editingTable.qr_token || editingTable.token) : token, // Keep both for compatibility
       };
 
       if (editingTable) {
@@ -123,7 +124,9 @@ export function TableManagement() {
 
   const generateQRCode = async (table: RestaurantTable) => {
     try {
-      const orderUrl = `${window.location.origin}/order/${table.token}`;
+      // Use qr_token if available, otherwise fall back to token
+      const token = table.qr_token || table.token;
+      const orderUrl = `${window.location.origin}/order/${token}`;
       const qrCode = await QRCodeLib.toDataURL(orderUrl, {
         width: 512,
         margin: 2,
@@ -146,7 +149,9 @@ export function TableManagement() {
     link.click();
   };
 
-  const copyOrderUrl = (token: string) => {
+  const copyOrderUrl = (table: RestaurantTable) => {
+    // Use qr_token if available, otherwise fall back to token
+    const token = table.qr_token || table.token;
     const orderUrl = `${window.location.origin}/order/${token}`;
     navigator.clipboard.writeText(orderUrl);
     // You could add a toast notification here
@@ -216,7 +221,7 @@ export function TableManagement() {
 
                 <div className="flex gap-2">
                   <button
-                    onClick={() => copyOrderUrl(table.token)}
+                    onClick={() => copyOrderUrl(table)}
                     className="flex-1 btn-secondary flex items-center justify-center gap-2 text-sm"
                   >
                     <Copy className="w-4 h-4" />
@@ -241,7 +246,7 @@ export function TableManagement() {
 
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-500">
-                  Order URL: /order/{table.token.slice(0, 8)}...
+                  Order URL: /order/{(table.qr_token || table.token).slice(0, 8)}...
                 </p>
               </div>
             </div>
@@ -389,7 +394,7 @@ export function TableManagement() {
                   </button>
 
                   <button
-                    onClick={() => copyOrderUrl(showQRModal.table.token)}
+                    onClick={() => copyOrderUrl(showQRModal.table)}
                     className="w-full btn-secondary flex items-center justify-center gap-2"
                   >
                     <Copy className="w-4 h-4" />

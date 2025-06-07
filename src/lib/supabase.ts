@@ -1,15 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../types/supabase';
+import { config } from './config';
 
-// These will be set from environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+// Use configuration helper
+const supabaseUrl = config.supabase.url;
+const supabaseAnonKey = config.supabase.anonKey;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase environment variables are not set');
-}
-
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
@@ -213,14 +209,14 @@ export const dbHelpers = {
   },
 
   // Table helpers
-  async getTableByToken(qrToken: string) {
+  async getTableByToken(token: string) {
     const { data, error } = await supabase
       .from('restaurant_tables')
       .select(`
         *,
         restaurant:restaurants(*)
       `)
-      .eq('qr_token', qrToken)
+      .or(`qr_token.eq.${token},token.eq.${token}`)
       .eq('is_active', true)
       .single();
 

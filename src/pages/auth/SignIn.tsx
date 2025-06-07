@@ -43,11 +43,18 @@ export function SignIn() {
         // Redirect based on user role will be handled by the auth context
         navigate('/dashboard');
       } else {
-        setError(result.error || 'Failed to sign in');
+        // Check if it's a connection error
+        if (result.error?.includes('fetch') || result.error?.includes('network')) {
+          setError('Connection error. Please check your internet connection and try again.');
+        } else if (result.error?.includes('Invalid login credentials')) {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else {
+          setError(result.error || 'Failed to sign in. Please try again.');
+        }
       }
     } catch (error) {
-      setError('An unexpected error occurred');
       console.error('Sign in error:', error);
+      setError('An unexpected error occurred. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

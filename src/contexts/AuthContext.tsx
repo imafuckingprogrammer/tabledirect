@@ -26,17 +26,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [activeSession, setActiveSession] = useState<ActiveSession | undefined>();
 
   useEffect(() => {
+    let isMounted = true;
+    
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await loadUserRole(session.user.id);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await loadUserRole(session.user.id);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      
-      setLoading(false);
     };
 
     getInitialSession();
@@ -44,6 +55,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!isMounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -53,18 +66,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
           // Clean up on sign out
           setUserRole(undefined);
           setRestaurantId(undefined);
-          if (activeSession) {
-            await dbHelpers.endSession(activeSession.id).catch(console.error);
-            setActiveSession(undefined);
+          // Only end session if we have one active
+          const currentActiveSession = activeSession;
+          if (currentActiveSession) {
+            try {
+              await dbHelpers.endSession(currentActiveSession.id);
+              setActiveSession(undefined);
+            } catch (error) {
+              console.error('Error ending session during sign out:', error);
+            }
           }
         }
         
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     );
 
-    return () => subscription.unsubscribe();
-  }, [activeSession]);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, []); // Remove activeSession dependency to prevent infinite loop
 
   const loadUserRole = async (userId: string) => {
     try {
@@ -76,7 +100,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('subscription_status', 'active')
         .limit(1);
 
-      if (!ownerError && restaurants && restaurants.length > 0) {
+      if (ownerError) {
+        console.error('Error checking owner status:', ownerError);
+      } else if (restaurants && restaurants.length > 0) {
         setUserRole('owner');
         setRestaurantId(restaurants[0].id);
         return;
@@ -99,7 +125,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .eq('restaurants.subscription_status', 'active')
         .limit(1);
 
-      if (!staffError && staffData && staffData.length > 0) {
+      if (staffError) {
+        console.error('Error checking staff status:', staffError);
+      } else if (staffData && staffData.length > 0) {
         const staff = staffData[0];
         setUserRole(staff.role as UserRole);
         setRestaurantId(staff.restaurant_id);
@@ -111,6 +139,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setRestaurantId(undefined);
     } catch (error) {
       console.error('Error loading user role:', error);
+      // Set defaults even on error to prevent infinite loading
+      setUserRole(undefined);
+      setRestaurantId(undefined);
     }
   };
 
