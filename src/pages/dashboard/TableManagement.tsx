@@ -114,7 +114,7 @@ export function TableManagement() {
   const startEditing = (table: RestaurantTable) => {
     setTableForm({
       table_number: table.table_number.toString(),
-      seats: table.seats,
+      seats: table.seats || 4, // Handle optional field
       location: table.location || '',
       is_active: table.is_active,
     });
@@ -193,7 +193,7 @@ export function TableManagement() {
                     Table {table.table_number}
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {table.seats} seats
+                    {table.seats || 4} seats
                   </p>
                 </div>
                 
@@ -246,7 +246,7 @@ export function TableManagement() {
 
               <div className="mt-4 pt-4 border-t border-gray-200">
                 <p className="text-xs text-gray-500">
-                  Order URL: /order/{(table.qr_token || table.token).slice(0, 8)}...
+                  Order URL: /order/{(table.qr_token || table.token || 'pending').slice(0, 8)}...
                 </p>
               </div>
             </div>

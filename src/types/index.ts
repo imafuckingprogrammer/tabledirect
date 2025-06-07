@@ -59,11 +59,12 @@ export interface RestaurantTable {
   restaurant_id: string;
   table_number: number;
   qr_token: string;
-  token: string; // For compatibility with existing code
-  seats: number;
-  location?: string;
+  token?: string; // Optional for compatibility with existing code
+  seats?: number; // Optional since this is a new field
+  location?: string; // Optional
   is_active: boolean;
   created_at: string;
+  restaurant?: Restaurant;
 }
 
 export interface MenuCategory {
@@ -89,7 +90,7 @@ export interface MenuItem {
   preferred_station_id?: string;
   preparation_time_minutes: number;
   preparation_time?: number;
-  allergens?: string[];
+  allergens?: string[] | null; // Can be null from database
   created_at: string;
   updated_at: string;
   category?: MenuCategory;
@@ -252,6 +253,7 @@ export interface MenuItemFormData {
   image_url?: string;
   preparation_time_minutes: number;
   preferred_station_id?: string;
+  allergens?: string[];
 }
 
 export interface OrderFormData {
